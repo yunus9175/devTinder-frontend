@@ -15,6 +15,12 @@ export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    /**
+     * Stores complete user data from API (login, signup, or profile/view).
+     * User object includes: _id, firstName, lastName, email, profilePicture,
+     * about, skills, createdAt, updatedAt, etc.
+     * This data persists in Redux and is available throughout the app.
+     */
     setCredentials: (state, action: { payload: User }) => {
       state.user = action.payload
       state.isAuthenticated = true

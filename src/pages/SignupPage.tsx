@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signup } from '../api/auth'
 import { Button } from '../components/ui/Button'
@@ -7,9 +7,13 @@ import { AuthLayout } from '../components/layout/AuthLayout'
 import { ROUTES } from '../constants'
 import { validateSignupFields } from '../lib/validation'
 import type { SignupPayload } from '../types/auth'
+import { useAppDispatch, useAppSelector } from '../store'
+import { setCredentials } from '../store/slices/authSlice'
 
 export function SignupPage() {
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
   const [formData, setFormData] = useState<SignupPayload>({
     firstName: '',
     lastName: '',
@@ -19,6 +23,12 @@ export function SignupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(ROUTES.DASHBOARD, { replace: true })
+    }
+  }, [isAuthenticated, navigate])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -38,7 +48,8 @@ export function SignupPage() {
     setSubmitError(null)
     setLoading(true)
     try {
-      await signup(formData)
+      const { user } = await signup(formData)
+      dispatch(setCredentials(user))
       navigate(ROUTES.DASHBOARD, { replace: true })
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Sign up failed')

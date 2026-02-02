@@ -16,12 +16,16 @@ A modern frontend for **DevTinder** — connect with developers, swipe, match, a
 ## Implemented So Far
 
 - **Routing** — Landing (`/`), Login (`/login`), Signup (`/signup`), Dashboard (`/dashboard`) with React Router and a shared `Layout` + `Outlet`
-- **Layout** — Navbar (DevTinder logo; on login page shows “Sign up”, on signup page shows “Log in”; elsewhere avatar dropdown with Profile, Settings, Logout) and Footer (Services, Company, Social links) on every page
-- **Auth pages** — Login and Signup with DaisyUI-based `Input` and `Button`, client-side validation, error display; password fields have in-field eye icon to toggle visibility
-- **Auth API** — Axios client (`src/api/client.ts`), login / signup / logout in `src/api/auth.ts`, error handling
+- **Layout** — Navbar (DevTinder logo; shows "Welcome, {firstName}" when logged in; on login page shows "Sign up", on signup page shows "Log in"; elsewhere avatar dropdown with Profile, Settings, Logout) and Footer (Services, Company, Social links). Navbar and Footer use matching `bg-base-300` background color. Footer hidden on login/signup pages.
+- **Auth pages** — Login and Signup with DaisyUI-based `Input` and `Button`, client-side validation, error display; password fields have in-field eye icon to toggle visibility. Forms centered in viewport without scrolling.
+- **Auth guard** — Logged-in users are automatically redirected from login/signup pages to dashboard. `LoginPage` and `SignupPage` check Redux `isAuthenticated` state.
+- **Session restoration** — `AuthInitializer` component calls `/profile/view` API on app mount/refresh to restore user session. User data (including `profilePicture`, `firstName`, `lastName`, `email`, `about`, `skills`, etc.) stored in Redux and persists across page refreshes.
+- **User profile display** — Navbar shows user's profile picture from Redux state (`user.profilePicture`) with fallback to default avatar. Welcome message displays user's first name from Redux.
+- **Auth API** — Axios client (`src/api/client.ts`) with `withCredentials: true` for session cookies. Login, signup, logout, and `getProfile` functions in `src/api/auth.ts` with error handling. Handles backend response format `{ message, data: {...} }`.
+- **CORS proxy** — Vite dev server proxy (`/api` → `http://localhost:8080`) configured in `vite.config.ts` to avoid CORS issues in development.
 - **UI components** — Reusable DaisyUI wrappers: `Button` and `Input` in `src/components/ui`; `PageLoader` (DaisyUI loading spinner) as Suspense fallback
 - **Lazy loading** — Route-level code splitting with `React.lazy()` for Layout and all pages; `Suspense` with `PageLoader` as fallback
-- **Redux Toolkit** — Store with `auth` slice (`user`, `isAuthenticated`); `setCredentials` / `clearCredentials`; `Provider` in `main.tsx`; typed `useAppDispatch` and `useAppSelector`
+- **Redux Toolkit** — Store with `auth` slice (`user`, `isAuthenticated`); `setCredentials` / `clearCredentials` actions; `Provider` in `main.tsx`; typed `useAppDispatch` and `useAppSelector` hooks
 - **Landing page** — Tinder-style hero, CTAs (Create account / Log in), card-style visual
 - **Mobile responsive** — Layout, auth forms, and landing tuned for small screens (safe areas, touch-friendly controls)
 - **Project rules** — `cursor.rules` enforces DaisyUI for all buttons and inputs; no raw `<button>` / `<input>` without DaisyUI usage

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../api/auth'
 import { Button } from '../components/ui/Button'
@@ -7,13 +7,23 @@ import { AuthLayout } from '../components/layout/AuthLayout'
 import { ROUTES } from '../constants'
 import { validateLoginFields } from '../lib/validation'
 import type { LoginPayload } from '../types/auth'
+import { useAppDispatch, useAppSelector } from '../store'
+import { setCredentials } from '../store/slices/authSlice'
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
   const [formData, setFormData] = useState<LoginPayload>({ email: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(ROUTES.DASHBOARD, { replace: true })
+    }
+  }, [isAuthenticated, navigate])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -33,7 +43,8 @@ export function LoginPage() {
     setSubmitError(null)
     setLoading(true)
     try {
-      await login(formData)
+      const { user } = await login(formData)
+      dispatch(setCredentials(user))
       navigate(ROUTES.DASHBOARD, { replace: true })
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Login failed')

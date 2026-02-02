@@ -1,5 +1,7 @@
+/** In dev we use Vite proxy (/api -> http://localhost:8080) to avoid CORS. */
 export const API_BASE_URL =
-  import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
+  import.meta.env.VITE_API_URL ??
+  (import.meta.env.DEV ? '/api' : 'http://localhost:8080')
 
 /** Backend expects validator.isStrongPassword: min 8 chars, 1 lower, 1 upper, 1 number, 1 symbol */
 export const PASSWORD_MIN_LENGTH = 8

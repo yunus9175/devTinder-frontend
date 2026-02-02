@@ -1,30 +1,40 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ROUTES } from '../../constants'
 import { logout } from '../../api/auth'
+import { useAppDispatch, useAppSelector } from '../../store'
+import { clearCredentials } from '../../store/slices/authSlice'
 
 const DEFAULT_AVATAR = 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
 
 export function Navbar() {
   const location = useLocation()
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const user = useAppSelector((state) => state.auth.user)
+  const profilePicture = user?.profilePicture ?? DEFAULT_AVATAR
   const isLoginPage = location.pathname === ROUTES.LOGIN
   const isSignupPage = location.pathname === ROUTES.SIGNUP
 
   const handleLogout = async () => {
     try {
       await logout()
-      navigate(ROUTES.HOME)
     } catch {
-      navigate(ROUTES.HOME)
     }
+    dispatch(clearCredentials())
+    navigate(ROUTES.HOME)
   }
 
   return (
-    <div className="navbar bg-base-100 shadow-sm">
-      <div className="flex-1">
+    <div className="navbar bg-base-300 shadow-sm">
+      <div className="flex-1 flex items-center gap-2 sm:gap-4 justify-between">
         <Link to={ROUTES.HOME} className="btn btn-ghost text-xl">
           DevTinder
         </Link>
+        {user && (
+          <span className="text-sm sm:text-base text-base-content/80 truncate max-w-[140px] sm:max-w-none">
+            Welcome, {user.firstName}
+          </span>
+        )}
       </div>
       <div className="flex gap-2">
         {isLoginPage && (
@@ -37,13 +47,17 @@ export function Navbar() {
             Log in
           </Link>
         )}
-        {!isLoginPage && !isSignupPage && (
+        {!isLoginPage && !isSignupPage && user && (
           <div className="dropdown dropdown-end">
             <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
               <div className="w-10 rounded-full">
                 <img
-                  alt="Profile"
-                  src={DEFAULT_AVATAR}
+                  alt={`${user.firstName} profile`}
+                  src={profilePicture}
+                  onError={(e) => {
+                    // Fallback to default avatar if image fails to load
+                    ; (e.target as HTMLImageElement).src = DEFAULT_AVATAR
+                  }}
                 />
               </div>
             </div>

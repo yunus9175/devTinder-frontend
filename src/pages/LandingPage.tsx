@@ -3,7 +3,7 @@ import { ROUTES } from '../constants'
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen min-h-[100dvh] flex flex-col bg-gradient-to-b from-primary/10 via-base-100 to-base-200 overflow-x-hidden">
+    <div className="min-h-[calc(100dvh-64px)] flex flex-col bg-gradient-to-b from-primary/10 via-base-100 to-base-200 overflow-x-hidden">
       {/* Hero */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pb-8 pt-6 sm:pt-8">
         <div className="w-full max-w-lg mx-auto text-center">
@@ -47,10 +47,7 @@ export function LandingPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="px-4 py-4 sm:py-6 text-center text-sm text-base-content/60 safe-area-padding">
-        <p>By continuing, you agree to our Terms and Privacy Policy.</p>
-      </footer>
+
     </div>
   )
 }

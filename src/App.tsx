@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { AuthInitializer } from './components/auth/AuthInitializer'
 import { PageLoader } from './components/ui/PageLoader'
 import { ROUTES } from './constants'
 
@@ -22,6 +23,7 @@ const HomePage = lazy(() =>
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthInitializer />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route element={<Layout />}>
