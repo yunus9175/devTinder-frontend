@@ -1,0 +1,9 @@
+# DevTinder Frontend Rules
+
+## UI components
+- **DaisyUI does not export React components.** It is a Tailwind plugin that provides CSS classes. Use our wrappers that apply those classes:
+  - **Buttons:** use `Button` from `src/components/ui/Button.tsx` everywhere (DaisyUI classes: `btn`, `btn-primary`, `btn-block`, `loading`, `loading-spinner`).
+  - **Text/email/password fields:** use `Input` from `src/components/ui/Input.tsx` everywhere (DaisyUI classes: `form-control`, `label`, `input`, `input-bordered`, `input-error`).
+  - **Other UI:** use DaisyUI class names on HTML (e.g. `card`, `card-body`, `alert`, `alert-error`, `link`, `link-primary`, `divider`). See https://daisyui.com/components/.
+- Do not use raw `<button>` or `<input>` without DaisyUI classes; use `Button` and `Input` from `components/ui` for all form controls.
+- When adding new UI, check https://daisyui.com/components/ for the right DaisyUI pattern and either use our wrappers or apply DaisyUI classes.
