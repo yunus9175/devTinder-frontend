@@ -15,4 +15,15 @@ export const ROUTES = {
   SIGNUP: '/signup',
   /** After login */
   DASHBOARD: '/dashboard',
+  PROFILE: '/profile',
+  CONNECTIONS: '/connections',
+  REQUESTS: '/requests',
 } as const
+
+/**
+ * Session cookie name set by backend on login (e.g. "connect.sid" for Express).
+ * If set, profile API is only called when this cookie exists (user not logged out).
+ * Leave unset if backend uses HttpOnly session cookie (not readable from JS).
+ */
+export const SESSION_COOKIE_NAME = import.meta.env
+  .VITE_SESSION_COOKIE_NAME as string | undefined

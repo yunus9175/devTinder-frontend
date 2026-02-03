@@ -10,7 +10,7 @@ import type { SignupPayload } from '../types/auth'
 import { useAppDispatch, useAppSelector } from '../store'
 import { setCredentials } from '../store/slices/authSlice'
 
-export function SignupPage() {
+export function Signup() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)

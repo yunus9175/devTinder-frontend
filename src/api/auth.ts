@@ -1,6 +1,17 @@
 import axios from 'axios'
 import { api } from './client'
-import type { AuthErrorResponse, AuthResponse, LoginPayload, SignupPayload, User } from '../types/auth'
+import type {
+  AuthErrorResponse,
+  AuthResponse,
+  ConnectionRequest,
+  ConnectionsResponse,
+  FeedResponse,
+  LoginPayload,
+  RequestsResponse,
+  SignupPayload,
+  UpdateProfilePayload,
+  User,
+} from '../types/auth'
 
 function getErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err) && err.response?.data) {
@@ -67,6 +78,92 @@ export async function getProfile(): Promise<AuthResponse> {
     // Fallback: if response is user object directly, wrap it
     return {
       message: 'Profile fetched successfully',
+      user: data as User,
+    }
+  } catch (err) {
+    throw new Error(getErrorMessage(err))
+  }
+}
+
+/**
+ * Fetches feed of users from GET /user/feed.
+ * Backend returns { message: "...", data: User[] }.
+ */
+export async function getFeed(): Promise<FeedResponse> {
+  try {
+    const { data } = await api.get<FeedResponse>('/user/feed')
+    if (data && typeof data === 'object' && Array.isArray(data.data)) {
+      return { message: data.message ?? 'Success', data: data.data }
+    }
+    return { message: 'Success', data: [] }
+  } catch (err) {
+    throw new Error(getErrorMessage(err))
+  }
+}
+
+/**
+ * Fetches connected users from GET /user/connection.
+ * Backend returns { message: "...", data: User[] }.
+ */
+export async function getConnections(): Promise<ConnectionsResponse> {
+  try {
+    const { data } = await api.get<ConnectionsResponse>('/user/connection')
+    if (data && typeof data === 'object' && Array.isArray(data.data)) {
+      return { message: data.message ?? 'Success', data: data.data }
+    }
+    return { message: 'Success', data: [] }
+  } catch (err) {
+    throw new Error(getErrorMessage(err))
+  }
+}
+
+/**
+ * Fetches incoming connection requests from GET /user/requests/received.
+ * Backend returns { message: "...", data: ConnectionRequest[] }.
+ */
+export async function getReceivedRequests(): Promise<RequestsResponse> {
+  try {
+    const { data } = await api.get<RequestsResponse>('/user/requests/received')
+    if (data && typeof data === 'object' && Array.isArray((data as RequestsResponse).data)) {
+      return {
+        message: (data as RequestsResponse).message ?? 'Success',
+        data: (data as RequestsResponse).data as ConnectionRequest[],
+      }
+    }
+    return { message: 'Success', data: [] }
+  } catch (err) {
+    throw new Error(getErrorMessage(err))
+  }
+}
+
+/**
+ * Updates current user profile via PATCH /profile/edit.
+ * Backend returns { message, data: User }. Redux should be updated with returned user.
+ */
+export async function updateProfile(payload: UpdateProfilePayload): Promise<AuthResponse> {
+  try {
+    const { data } = await api.patch('/profile/edit', {
+      firstName: payload.firstName.trim(),
+      lastName: payload.lastName.trim(),
+      email: payload.email.trim().toLowerCase(),
+      ...(payload.age !== undefined && payload.age !== null && !Number.isNaN(payload.age) && { age: payload.age }),
+      ...(payload.gender !== undefined && { gender: payload.gender.trim() || undefined }),
+      ...(payload.profilePicture !== undefined && { profilePicture: payload.profilePicture.trim() || undefined }),
+      ...(payload.about !== undefined && { about: payload.about.trim() || undefined }),
+      ...(payload.skills !== undefined && { skills: payload.skills }),
+    })
+
+    if (data && typeof data === 'object' && 'data' in data) {
+      return {
+        message: data.message || 'Profile updated',
+        user: data.data as User,
+      }
+    }
+    if (data && typeof data === 'object' && 'user' in data) {
+      return data as AuthResponse
+    }
+    return {
+      message: 'Profile updated',
       user: data as User,
     }
   } catch (err) {

@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ROUTES } from '../../constants'
-import { logout } from '../../api/auth'
-import { useAppDispatch, useAppSelector } from '../../store'
+import { ROUTES } from '../../constants/index'
+import { logout } from '../../api/auth.ts'
+import { useAppDispatch, useAppSelector } from '../../store/index.ts'
 import { clearCredentials } from '../../store/slices/authSlice'
 
 const DEFAULT_AVATAR = 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
@@ -31,7 +31,7 @@ export function Navbar() {
           DevTinder
         </Link>
         {user && (
-          <span className="text-sm sm:text-base text-base-content/80 truncate max-w-[140px] sm:max-w-none">
+          <span className="text-sm sm:text-base text-base-content/80 truncate max-w-[140px] sm:max-w-none mr-2">
             Welcome, {user.firstName}
           </span>
         )}
@@ -66,10 +66,16 @@ export function Navbar() {
               className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
             >
               <li>
-                <Link to={ROUTES.DASHBOARD} className="justify-between">
+                <Link to={ROUTES.PROFILE} className="justify-between">
                   Profile
                   <span className="badge">New</span>
                 </Link>
+              </li>
+              <li>
+                <Link to={ROUTES.CONNECTIONS}>Connections</Link>
+              </li>
+              <li>
+                <Link to={ROUTES.REQUESTS}>Requests</Link>
               </li>
               <li><a>Settings</a></li>
               <li><button type="button" onClick={handleLogout}>Logout</button></li>

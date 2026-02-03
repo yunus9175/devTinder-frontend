@@ -13,8 +13,8 @@
     ],
     "jsx": "react-jsx",
     "skipLibCheck": true,
-    /* Bundler mode */
-    "moduleResolution": "bundler",
+    /* Node-style module resolution to support folder imports like ../constants */
+    "moduleResolution": "node",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",

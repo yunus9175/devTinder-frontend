@@ -20,3 +20,52 @@ input:-webkit-autofill {
     min-height: 2.75rem;
   }
 }
+
+/* Animated border: @property lets us animate --angle so the gradient "snake" runs smoothly */
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 90deg;
+  inherits: true;
+}
+
+.card-border-animate {
+  --d: 6000ms;
+  --c1: var(--color-primary);
+  --c2: color-mix(in oklch, var(--color-primary) 15%, transparent);
+  position: relative;
+  padding: 3px;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+/* Gradient layer: angle is animated via --angle, so the border line runs without rotating the box */
+.card-border-animate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from var(--angle),
+      var(--c2),
+      var(--c1) 0.1turn,
+      var(--c1) 0.15turn,
+      var(--c2) 0.25turn);
+  animation: borderRotate var(--d) linear infinite forwards;
+  z-index: 0;
+}
+
+@keyframes borderRotate {
+  100% {
+    --angle: 420deg;
+  }
+}
+
+.card-border-animate-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: calc(1rem - 3px);
+  background: var(--color-base-100);
+  overflow: hidden;
+}

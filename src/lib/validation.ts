@@ -75,3 +75,46 @@ export function validateLoginFields(payload: {
     errors,
   }
 }
+
+const URL_REGEX = /^https?:\/\/.+/
+
+export function validateProfileFields(payload: {
+  firstName: string
+  lastName: string
+  email: string
+  age?: number
+  gender?: string
+  profilePicture?: string
+  about?: string
+}): { valid: boolean; errors: Record<string, string> } {
+  const errors: Record<string, string> = {}
+  const firstName = payload.firstName.trim()
+  const lastName = payload.lastName.trim()
+  const email = payload.email.trim().toLowerCase()
+
+  if (!firstName || firstName.length < 3 || firstName.length > 50) {
+    errors.firstName = 'First name must be between 3 and 50 characters'
+  }
+  if (!lastName || lastName.length < 3 || lastName.length > 50) {
+    errors.lastName = 'Last name must be between 3 and 50 characters'
+  }
+  if (!email) {
+    errors.email = 'Email is required'
+  } else if (!isEmail(payload.email)) {
+    errors.email = 'Please enter a valid email address'
+  }
+  if (payload.age !== undefined && payload.age !== null) {
+    const age = Number(payload.age)
+    if (Number.isNaN(age) || age < 18 || age > 120) {
+      errors.age = 'Age must be between 18 and 120'
+    }
+  }
+  if (payload.profilePicture !== undefined && payload.profilePicture.trim() !== '' && !URL_REGEX.test(payload.profilePicture.trim())) {
+    errors.profilePicture = 'Please enter a valid URL'
+  }
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+  }
+}

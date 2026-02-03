@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ROUTES } from '../constants'
 
-export function LandingPage() {
+export function Landing() {
   return (
     <div className="min-h-[calc(100dvh-64px)] flex flex-col bg-gradient-to-b from-primary/10 via-base-100 to-base-200 overflow-x-hidden">
       {/* Hero */}
@@ -29,10 +29,10 @@ export function LandingPage() {
           </div>
         </div>
 
-        {/* Visual hint - card stack style */}
+        {/* Visual hint - card stack style with animated border */}
         <div className="mt-12 sm:mt-16 w-full max-w-sm mx-auto flex justify-center">
-          <div className="relative w-64 sm:w-72 aspect-[3/4] max-h-[320px] rounded-2xl shadow-2xl overflow-hidden bg-base-100 border border-base-300">
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+          <div className="card-border-animate w-64 sm:w-72 aspect-[3/4] max-h-[320px] shadow-2xl">
+            <div className="card-border-animate-inner flex flex-col items-center justify-center p-6 text-center">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary/20 flex items-center justify-center mb-4">
                 <span className="text-3xl sm:text-4xl">👋</span>
               </div>
