@@ -1,10 +1,15 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getReceivedRequests } from '../api/auth'
+import { getReceivedRequests, reviewRequest } from '../api/auth'
 import { ProfileCard } from '../components/profile'
 import { ROUTES } from '../constants'
 import { useAppDispatch, useAppSelector } from '../store'
-import { setRequests, setRequestsError, setRequestsLoading } from '../store/slices/requestsSlice'
+import {
+  removeRequest,
+  setRequests,
+  setRequestsError,
+  setRequestsLoading,
+} from '../store/slices/requestsSlice'
 import type { ConnectionRequest, User } from '../types/auth'
 
 const DEFAULT_AVATAR =
@@ -26,6 +31,8 @@ export function Requests() {
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((state) => state.auth)
   const { items, loading, error } = useAppSelector((state) => state.requests)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [processingId, setProcessingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) {
@@ -33,6 +40,7 @@ export function Requests() {
       return
     }
     dispatch(setRequestsLoading(true))
+    setActionError(null)
     getReceivedRequests()
       .then(({ data }) => {
         dispatch(setRequests(data))
@@ -49,6 +57,22 @@ export function Requests() {
 
   if (!user) {
     return null
+  }
+
+  const handleReview = (req: ConnectionRequest, status: 'accepted' | 'rejected') => {
+    if (processingId) return
+    setProcessingId(req._id)
+    setActionError(null)
+    reviewRequest(req._id, status)
+      .then(() => {
+        dispatch(removeRequest(req._id))
+      })
+      .catch((err) => {
+        setActionError(err instanceof Error ? err.message : 'Failed to update request')
+      })
+      .finally(() => {
+        setProcessingId(null)
+      })
   }
 
   if (loading) {
@@ -82,6 +106,11 @@ export function Requests() {
     <div className="min-h-dvh flex flex-col bg-base-200 safe-area-padding">
       <main className="flex-1 px-4 sm:px-6 py-6 sm:py-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-base-content mb-6">Requests</h1>
+        {actionError && (
+          <div className="alert alert-error mb-4 max-w-md">
+            <span>{actionError}</span>
+          </div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {items.map((req: ConnectionRequest) => {
             const from = req.fromUserId
@@ -90,21 +119,14 @@ export function Requests() {
                 <ProfileCard
                   size="sm"
                   variant="request"
+                  actionsDisabled={processingId === req._id}
                   displayName={userToDisplayName(from)}
                   displayAgeGender={userToDisplayAgeGender(from) || undefined}
                   avatarUrl={from.profilePicture?.trim() || DEFAULT_AVATAR}
                   about={from.about}
                   skills={from.skills}
-                  onIgnore={() => {
-                    // TODO: wire up reject API
-                    // eslint-disable-next-line no-console
-                    console.log('Reject request', req._id)
-                  }}
-                  onInterested={() => {
-                    // TODO: wire up accept API
-                    // eslint-disable-next-line no-console
-                    console.log('Accept request', req._id)
-                  }}
+                  onIgnore={() => handleReview(req, 'rejected')}
+                  onInterested={() => handleReview(req, 'accepted')}
                 />
               </div>
             )

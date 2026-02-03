@@ -4,11 +4,14 @@ import type { User } from '../../types/auth'
 interface AuthState {
   user: User | null
   isAuthenticated: boolean
+  /** Tracks if user explicitly logged out in this SPA session. */
+  hasLoggedOut: boolean
 }
 
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
+  hasLoggedOut: false,
 }
 
 export const authSlice = createSlice({
@@ -24,10 +27,12 @@ export const authSlice = createSlice({
     setCredentials: (state, action: { payload: User }) => {
       state.user = action.payload
       state.isAuthenticated = true
+      state.hasLoggedOut = false
     },
     clearCredentials: (state) => {
       state.user = null
       state.isAuthenticated = false
+      state.hasLoggedOut = true
     },
   },
 })

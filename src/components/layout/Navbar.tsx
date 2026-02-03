@@ -6,7 +6,11 @@ import { clearCredentials } from '../../store/slices/authSlice'
 
 const DEFAULT_AVATAR = 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
 
-export function Navbar() {
+interface NavbarProps {
+  hidden?: boolean
+}
+
+export function Navbar({ hidden = false }: NavbarProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -24,8 +28,10 @@ export function Navbar() {
     navigate(ROUTES.HOME)
   }
 
+  const translateClass = hidden ? '-translate-y-full' : 'translate-y-0'
+
   return (
-    <div className="navbar bg-base-300 shadow-sm">
+    <div className={`navbar bg-base-300 shadow-sm sticky top-0 z-20 transition-transform duration-300 ease-out ${translateClass}`}>
       <div className="flex-1 flex items-center gap-2 sm:gap-4 justify-between">
         <Link to={ROUTES.HOME} className="btn btn-ghost text-xl">
           DevTinder

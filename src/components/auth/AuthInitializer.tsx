@@ -28,12 +28,14 @@ function hasSessionCookie(): boolean {
  */
 export function AuthInitializer() {
   const dispatch = useAppDispatch()
-  const user = useAppSelector((state) => state.auth.user)
+  const { user, hasLoggedOut } = useAppSelector((state) => state.auth)
   const { pathname } = useLocation()
 
   useEffect(() => {
-    // Skip on landing/login/signup; avoid API call when user is not logged in
-    if (!hasSessionCookie() && SKIP_PROFILE_ROUTES.includes(pathname)) return
+    // If user explicitly logged out in this SPA session, never auto-fetch profile again.
+    if (hasLoggedOut) return
+    // Skip auto-fetch on public auth routes (landing/login/signup)
+    if (SKIP_PROFILE_ROUTES.includes(pathname)) return
     // Only call if session cookie is present (user not logged out), when cookie name is configured
     if (!user && hasSessionCookie()) {
       getProfile()
@@ -49,7 +51,7 @@ export function AuthInitializer() {
           console.debug('Failed to fetch profile (user not logged in):', err)
         })
     }
-  }, [dispatch, user, pathname])
+  }, [dispatch, user, pathname, hasLoggedOut])
 
   return null
 }

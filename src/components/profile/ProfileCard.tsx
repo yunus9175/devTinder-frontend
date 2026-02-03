@@ -13,6 +13,8 @@ export interface ProfileCardProps {
   className?: string
   /** Controls action labels/styles (e.g. feed vs request cards). */
   variant?: 'default' | 'request'
+  /** When true, disables both action buttons (e.g. while calling API). */
+  actionsDisabled?: boolean
 }
 
 const SKILLS_VISIBLE = 3
@@ -29,6 +31,7 @@ export function ProfileCard({
   stretch = false,
   className = '',
   variant = 'default',
+  actionsDisabled = false,
 }: ProfileCardProps) {
   const showActions = onIgnore !== undefined || onInterested !== undefined
   const skillsList = skills.slice(0, SKILLS_VISIBLE)
@@ -91,7 +94,7 @@ export function ProfileCard({
             <button
               type="button"
               className={primaryButtonClass}
-              disabled={!onIgnore}
+              disabled={actionsDisabled || !onIgnore}
               onClick={onIgnore}
             >
               {primaryLabel}
@@ -99,7 +102,7 @@ export function ProfileCard({
             <button
               type="button"
               className={secondaryButtonClass}
-              disabled={!onInterested}
+              disabled={actionsDisabled || !onInterested}
               onClick={onInterested}
             >
               {secondaryLabel}

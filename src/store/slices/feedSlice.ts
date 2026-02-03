@@ -21,6 +21,15 @@ export const feedSlice = createSlice({
       state.users = action.payload
       state.error = null
     },
+    appendFeed: (state, action: { payload: User[] }) => {
+      state.users = [...state.users, ...action.payload]
+      state.error = null
+    },
+    popFeedUser: (state) => {
+      if (state.users.length > 0) {
+        state.users = state.users.slice(1)
+      }
+    },
     setFeedLoading: (state, action: { payload: boolean }) => {
       state.loading = action.payload
     },
@@ -36,5 +45,6 @@ export const feedSlice = createSlice({
   },
 })
 
-export const { setFeed, setFeedLoading, setFeedError, clearFeed } = feedSlice.actions
+export const { setFeed, appendFeed, popFeedUser, setFeedLoading, setFeedError, clearFeed } =
+  feedSlice.actions
 export default feedSlice.reducer

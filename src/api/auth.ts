@@ -89,13 +89,39 @@ export async function getProfile(): Promise<AuthResponse> {
  * Fetches feed of users from GET /user/feed.
  * Backend returns { message: "...", data: User[] }.
  */
-export async function getFeed(): Promise<FeedResponse> {
+export async function getFeed(page = 1, limit = 10): Promise<FeedResponse> {
   try {
-    const { data } = await api.get<FeedResponse>('/user/feed')
+    const { data } = await api.get<FeedResponse>('/user/feed', {
+      params: { page, limit },
+    })
     if (data && typeof data === 'object' && Array.isArray(data.data)) {
       return { message: data.message ?? 'Success', data: data.data }
     }
     return { message: 'Success', data: [] }
+  } catch (err) {
+    throw new Error(getErrorMessage(err))
+  }
+}
+
+/**
+ * Sends an "interested" request for a user from the feed.
+ * POST /request/send/interested/:userId
+ */
+export async function sendInterestedRequest(userId: string): Promise<void> {
+  try {
+    await api.post(`/request/send/interested/${userId}`)
+  } catch (err) {
+    throw new Error(getErrorMessage(err))
+  }
+}
+
+/**
+ * Marks a user as ignored from the feed.
+ * Assuming backend supports POST /request/send/ignored/:userId.
+ */
+export async function sendIgnoredRequest(userId: string): Promise<void> {
+  try {
+    await api.post(`/request/send/ignored/${userId}`)
   } catch (err) {
     throw new Error(getErrorMessage(err))
   }
@@ -131,6 +157,21 @@ export async function getReceivedRequests(): Promise<RequestsResponse> {
       }
     }
     return { message: 'Success', data: [] }
+  } catch (err) {
+    throw new Error(getErrorMessage(err))
+  }
+}
+
+/**
+ * Reviews a pending connection request via POST /request/review/{status}/{requestId}.
+ * Status should be "accepted" or "rejected".
+ */
+export async function reviewRequest(
+  requestId: string,
+  status: 'accepted' | 'rejected',
+): Promise<void> {
+  try {
+    await api.post(`/request/review/${status}/${requestId}`)
   } catch (err) {
     throw new Error(getErrorMessage(err))
   }

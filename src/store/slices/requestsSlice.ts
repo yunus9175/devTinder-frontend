@@ -33,9 +33,13 @@ export const requestsSlice = createSlice({
       state.error = null
       state.loading = false
     },
+    removeRequest: (state, action: { payload: string }) => {
+      state.items = state.items.filter((req) => req._id !== action.payload)
+    },
   },
 })
 
-export const { setRequests, setRequestsLoading, setRequestsError, clearRequests } = requestsSlice.actions
+export const { setRequests, setRequestsLoading, setRequestsError, clearRequests, removeRequest } =
+  requestsSlice.actions
 export default requestsSlice.reducer
 

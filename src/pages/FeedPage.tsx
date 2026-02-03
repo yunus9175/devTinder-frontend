@@ -1,10 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getFeed } from '../api/auth'
+import { getFeed, sendIgnoredRequest, sendInterestedRequest } from '../api/auth'
 import { ProfileCard } from '../components/profile'
 import { ROUTES } from '../constants'
 import { useAppDispatch, useAppSelector } from '../store'
-import { setFeed, setFeedError, setFeedLoading } from '../store/slices/feedSlice'
+import { appendFeed, popFeedUser, setFeed, setFeedError, setFeedLoading } from '../store/slices/feedSlice'
 import type { User } from '../types/auth'
 
 const DEFAULT_AVATAR = 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
@@ -25,24 +25,164 @@ export function Feed() {
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((state) => state.auth)
   const { users, loading, error } = useAppSelector((state) => state.feed)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [fetchingMore, setFetchingMore] = useState(false)
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [processingId, setProcessingId] = useState<string | null>(null)
+  const [dragState, setDragState] = useState<{
+    active: boolean
+    startX: number
+    startY: number
+    x: number
+    y: number
+  }>({
+    active: false,
+    startX: 0,
+    startY: 0,
+    x: 0,
+    y: 0,
+  })
+
+  const topUser = users[0]
+  const swipeThreshold = 100
+
+  const visibleUsers = useMemo(() => users.slice(0, 3), [users])
 
   useEffect(() => {
     if (!user) {
       navigate(ROUTES.LOGIN, { replace: true })
       return
     }
-    dispatch(setFeedLoading(true))
-    getFeed()
+    if (users.length === 0) {
+      dispatch(setFeedLoading(true))
+      setToast(null)
+      getFeed(1)
+        .then(({ data }) => {
+          dispatch(setFeed(data))
+          setPage(1)
+          setHasMore(data.length > 0)
+        })
+        .catch((err) => {
+          dispatch(setFeedError(err instanceof Error ? err.message : 'Failed to load feed'))
+        })
+        .finally(() => {
+          dispatch(setFeedLoading(false))
+        })
+    }
+  }, [user, dispatch, navigate])
+
+  // Prefetch next page when deck is getting low
+  useEffect(() => {
+    if (!user) return
+    if (!hasMore || fetchingMore || loading) return
+    if (users.length > 3) return
+
+    setFetchingMore(true)
+    getFeed(page + 1)
       .then(({ data }) => {
-        dispatch(setFeed(data))
+        if (data.length === 0) {
+          setHasMore(false)
+          return
+        }
+        dispatch(appendFeed(data))
+        setPage((prev) => prev + 1)
       })
       .catch((err) => {
-        dispatch(setFeedError(err instanceof Error ? err.message : 'Failed to load feed'))
+        // Do not surface as main error; keep current deck usable
+        // eslint-disable-next-line no-console
+        console.error('Failed to load more feed users', err)
       })
       .finally(() => {
-        dispatch(setFeedLoading(false))
+        setFetchingMore(false)
       })
-  }, [user, dispatch, navigate])
+  }, [user, users.length, hasMore, fetchingMore, loading, page, dispatch])
+
+  // Auto-hide toast after a short delay
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 3000)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  const resetDrag = () => {
+    setDragState({
+      active: false,
+      startX: 0,
+      startY: 0,
+      x: 0,
+      y: 0,
+    })
+  }
+
+  const handleReview = (direction: 'left' | 'right') => {
+    const current = topUser
+    if (!current || processingId) return
+
+    setProcessingId(current._id)
+    setToast(null)
+
+    const apiCall =
+      direction === 'right'
+        ? sendInterestedRequest(current._id)
+        : sendIgnoredRequest(current._id)
+
+    apiCall
+      .then(() => {
+        dispatch(popFeedUser())
+        setToast({
+          type: 'success',
+          message: direction === 'right' ? 'Marked as interested' : 'Ignored developer',
+        })
+      })
+      .catch((err) => {
+        setToast({
+          type: 'error',
+          message: err instanceof Error ? err.message : 'Failed to update preference',
+        })
+      })
+      .finally(() => {
+        setProcessingId(null)
+        resetDrag()
+      })
+  }
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!topUser || processingId) return
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    setDragState({
+      active: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      x: 0,
+      y: 0,
+    })
+  }
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragState.active) return
+    e.preventDefault()
+    const x = e.clientX - dragState.startX
+    const y = e.clientY - dragState.startY
+    setDragState((prev) => ({
+      ...prev,
+      x,
+      y,
+    }))
+  }
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragState.active) return
+    const x = e.clientX - dragState.startX
+    if (x > swipeThreshold) {
+      handleReview('right')
+    } else if (x < -swipeThreshold) {
+      handleReview('left')
+    } else {
+      resetDrag()
+    }
+  }
 
   if (!user) {
     return null
@@ -75,27 +215,102 @@ export function Feed() {
     )
   }
 
+  const rootClassName = `min-h-[calc(100dvh-100px)] flex flex-col bg-base-200 safe-area-padding${dragState.active ? ' overflow-hidden' : ''
+    }`
+
   return (
-    <div className="min-h-dvh flex flex-col bg-base-200 safe-area-padding">
-      <main className="flex-1 px-4 sm:px-6 py-6 sm:py-8">
+    <div className={rootClassName}>
+      <main className="flex-1 px-4 sm:px-6 py-6 sm:py-8 flex flex-col items-center">
         <h1 className="text-2xl sm:text-3xl font-bold text-base-content mb-6">Feed</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {users.map((u) => (
-            <div key={u._id} className="w-full max-w-[280px] mx-auto sm:max-w-none">
-              <ProfileCard
-                size="sm"
-                displayName={userToDisplayName(u)}
-                displayAgeGender={userToDisplayAgeGender(u) || undefined}
-                avatarUrl={u.profilePicture?.trim() || DEFAULT_AVATAR}
-                about={u.about}
-                skills={u.skills}
-                onIgnore={() => { }}
-                onInterested={() => { }}
-              />
-            </div>
-          ))}
+        <div className="relative w-full max-w-md sm:max-w-lg flex-1 flex flex-col items-center justify-center">
+          {visibleUsers.map((u, index) => {
+            const isTop = index === 0
+            const offset = index
+            const baseTransform = isTop
+              ? `translateX(${dragState.x}px) translateY(${dragState.y}px) rotate(${dragState.x / 20}deg)`
+              : `scale(${1 - offset * 0.04}) translateY(${offset * 12}px)`
+
+            const opacityLabel = Math.min(Math.abs(dragState.x) / 120, 1)
+            const showLike = isTop && dragState.x > 0
+            const showNope = isTop && dragState.x < 0
+
+            return (
+              <div
+                key={u._id}
+                className="absolute inset-0 flex items-center justify-center"
+                style={{
+                  transform: baseTransform,
+                  transition:
+                    dragState.active || processingId === u._id ? 'none' : 'transform 0.2s ease-out',
+                  zIndex: 10 - index,
+                }}
+                onPointerDown={isTop ? handlePointerDown : undefined}
+                onPointerMove={isTop ? handlePointerMove : undefined}
+                onPointerUp={isTop ? handlePointerUp : undefined}
+                onPointerCancel={isTop ? handlePointerUp : undefined}
+              >
+                <div className="relative w-full max-w-sm">
+                  <ProfileCard
+                    size="md"
+                    displayName={userToDisplayName(u)}
+                    displayAgeGender={userToDisplayAgeGender(u) || undefined}
+                    avatarUrl={u.profilePicture?.trim() || DEFAULT_AVATAR}
+                    about={u.about}
+                    skills={u.skills}
+                  />
+                  {showLike && (
+                    <div
+                      className="absolute top-4 left-4 px-3 py-1 border-2 border-success text-success font-bold text-sm rounded-md bg-base-100/80"
+                      style={{ opacity: opacityLabel }}
+                    >
+                      LIKE
+                    </div>
+                  )}
+                  {showNope && (
+                    <div
+                      className="absolute top-4 right-4 px-3 py-1 border-2 border-error text-error font-bold text-sm rounded-md bg-base-100/80"
+                      style={{ opacity: opacityLabel }}
+                    >
+                      NOPE
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
+        <div className="mt-6 flex items-center justify-center gap-4">
+          <button
+            type="button"
+            className="btn btn-circle btn-outline btn-error text-xl"
+            disabled={!topUser || !!processingId}
+            onClick={() => handleReview('left')}
+          >
+            ✕
+          </button>
+          <button
+            type="button"
+            className="btn btn-circle btn-primary text-xl"
+            disabled={!topUser || !!processingId}
+            onClick={() => handleReview('right')}
+          >
+            ❤
+          </button>
+        </div>
+        {fetchingMore && hasMore && (
+          <p className="mt-4 text-sm text-base-content/60">Loading more developers...</p>
+        )}
       </main>
+      {toast && (
+        <div className="toast toast-top toast-center  z-50">
+          <div
+            className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'
+              }`}
+          >
+            <span>{toast.message}</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
