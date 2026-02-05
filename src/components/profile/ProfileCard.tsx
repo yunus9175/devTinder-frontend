@@ -60,7 +60,7 @@ export function ProfileCard({
         <img
           src={avatarUrl}
           alt={displayName}
-          className="block w-full h-full object-cover object-top"
+          className="block w-full h-full object-fill object-center"
           loading="lazy"
           decoding="async"
           onError={(e) => {
