@@ -29,6 +29,29 @@ export const authSlice = createSlice({
       state.isAuthenticated = true
       state.hasLoggedOut = false
     },
+    updateConnectionCounts: (
+      state,
+      action: { payload: { pendingIncomingDelta?: number; acceptedDelta?: number } },
+    ) => {
+      if (!state.user) return
+      const counts = state.user.connectionCounts ?? {
+        pendingIncoming: 0,
+        pendingOutgoing: 0,
+        accepted: 0,
+      }
+      const next = {
+        ...counts,
+        pendingIncoming: Math.max(
+          0,
+          counts.pendingIncoming + (action.payload.pendingIncomingDelta ?? 0),
+        ),
+        accepted: Math.max(0, counts.accepted + (action.payload.acceptedDelta ?? 0)),
+      }
+      state.user = {
+        ...state.user,
+        connectionCounts: next,
+      }
+    },
     clearCredentials: (state) => {
       state.user = null
       state.isAuthenticated = false
@@ -37,5 +60,5 @@ export const authSlice = createSlice({
   },
 })
 
-export const { setCredentials, clearCredentials } = authSlice.actions
+export const { setCredentials, clearCredentials, updateConnectionCounts } = authSlice.actions
 export default authSlice.reducer

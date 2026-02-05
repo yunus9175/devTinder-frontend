@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { updateProfile } from '../api/auth.ts'
-import { ProfileCard } from '../components/profile/ProfileCard.tsx'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { ROUTES } from '../constants/index.ts'
@@ -31,6 +30,7 @@ export function Profile() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [showSuccessToast, setShowSuccessToast] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
 
   /** Normalize gender from API (e.g. "male") to match dropdown option (e.g. "Male"). */
   const normalizeGender = (g: string | undefined): string => {
@@ -97,6 +97,7 @@ export function Profile() {
       const { user: updatedUser } = await updateProfile(payload)
       dispatch(setCredentials(updatedUser))
       setShowSuccessToast(true)
+      setIsEditing(false)
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Update failed')
     } finally {
@@ -117,32 +118,108 @@ export function Profile() {
   const displayName = [formData.firstName.trim(), formData.lastName.trim()].filter(Boolean).join(' ') || 'Your name'
   const displayAgeGender = [formData.ageInput.trim(), formData.gender?.trim()].filter(Boolean).join(', ') || 'Age, gender'
   const previewAvatar = formData.profilePicture?.trim() || DEFAULT_AVATAR
+  const connectionCounts = user.connectionCounts
+  const pendingIncoming = connectionCounts?.pendingIncoming ?? 0
+  const acceptedConnections = connectionCounts?.accepted ?? 0
 
   return (
     <div className="min-h-dvh flex flex-col bg-base-200 safe-area-padding">
       <main className="flex-1 px-4 sm:px-6 py-6 sm:py-8">
-        <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-10 items-center lg:items-stretch">
-          {/* Edit form */}
-          <div className="w-full max-w-lg shrink-0">
-            <div className="flex items-center gap-3 mb-6">
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="btn btn-ghost btn-circle btn-sm"
-                aria-label="Go back"
+        {/* Back + title pinned to top-left */}
+        <section className="w-full max-w-5xl mx-auto mb-4">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="btn btn-ghost btn-circle btn-sm"
+              aria-label="Go back"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <h1 className="text-2xl sm:text-3xl font-bold text-base-content">Edit profile</h1>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h2 className="text-xl sm:text-2xl font-semibold text-base-content">
+              Profile details
+            </h2>
+            {isEditing && (
+              <span className="badge badge-primary/80 text-xs">Editing</span>
+            )}
+          </div>
+        </section>
+
+        {/* Modern profile header – mobile & desktop */}
+        <section className="w-full max-w-5xl mx-auto mb-8">
+          <div className="relative overflow-hidden rounded-2xl bg-base-100 shadow-xl border border-base-300">
+            {/* Cover / banner */}
+            <div className="h-28 sm:h-32 bg-linear-to-r from-primary/80 via-secondary/60 to-primary/80" />
+            {/* Avatar overlapping banner / content */}
+            <div className="px-5 sm:px-8 pb-6">
+              <div className="flex flex-col items-center sm:items-start -mt-12">
+                <div className="avatar mb-3">
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full ring ring-base-100 ring-offset-[3px] ring-offset-base-100 border-4 border-base-100 overflow-hidden shadow-lg">
+                    <img
+                      src={previewAvatar}
+                      alt={displayName}
+                      className="w-full h-full object-cover object-top"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = DEFAULT_AVATAR
+                      }}
+                    />
+                  </div>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-base-content text-center sm:text-left w-full">
+                  {displayName}
+                </h1>
+                <p className="text-sm text-base-content/70 mt-1 text-center sm:text-left w-full">
+                  {formData.email || user.email}
+                </p>
+                {displayAgeGender !== 'Age, gender' && (
+                  <p className="mt-1 text-sm text-base-content/70 text-center sm:text-left w-full">
+                    {displayAgeGender}
+                  </p>
+                )}
+                {formData.about?.trim() && (
+                  <p className="mt-3 text-sm text-base-content/80 max-w-xl text-center sm:text-left w-full mx-auto sm:mx-0">
+                    {formData.about.trim()}
+                  </p>
+                )}
+                {/* Edit button + connection stats */}
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 w-full">
+                  <Button
+                    type="button"
+                    className="btn-sm px-5 bg-linear-to-r from-primary to-secondary border-none shadow-md hover:brightness-110"
+                    onClick={() => setIsEditing((prev) => !prev)}
+                  >
+                    {isEditing ? 'Cancel editing' : 'Edit profile'}
+                  </Button>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 ml-auto text-xs sm:text-sm">
+                    <div className="badge badge-lg gap-2 rounded-full bg-warning/15 text-warning px-3 py-1 font-semibold">
+                      <span className="h-2 w-2 rounded-full bg-warning" />
+                      <span className="uppercase tracking-wide">Pending</span>
+                      <span className="text-base-content/80">{pendingIncoming}</span>
+                    </div>
+                    <div className="badge badge-lg gap-2 rounded-full bg-success/15 text-success px-3 py-1 font-semibold">
+                      <span className="h-2 w-2 rounded-full bg-success" />
+                      <span className="uppercase tracking-wide">Accepted</span>
+                      <span className="text-base-content/80">{acceptedConnections}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
+        </section>
+
+        <div className="w-full max-w-5xl mx-auto">
+          {/* Edit form */}
+          <div className="w-full">
             <form onSubmit={handleSubmit} className="space-y-5">
               {submitError && (
                 <div
@@ -162,6 +239,7 @@ export function Profile() {
                   value={formData.firstName}
                   onChange={handleChange}
                   error={errors.firstName}
+                  disabled={!isEditing}
                   autoComplete="given-name"
                   minLength={3}
                   maxLength={50}
@@ -176,6 +254,7 @@ export function Profile() {
                   value={formData.lastName}
                   onChange={handleChange}
                   error={errors.lastName}
+                  disabled={!isEditing}
                   autoComplete="family-name"
                   minLength={3}
                   maxLength={50}
@@ -191,6 +270,7 @@ export function Profile() {
                 value={formData.email}
                 onChange={handleChange}
                 error={errors.email}
+                disabled={!isEditing}
                 autoComplete="email"
                 className="input-md"
               />
@@ -204,6 +284,7 @@ export function Profile() {
                   value={formData.ageInput}
                   onChange={handleChange}
                   error={errors.age}
+                  disabled={!isEditing}
                   min={18}
                   max={120}
                   className="input-md"
@@ -217,6 +298,7 @@ export function Profile() {
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
+                    disabled={!isEditing}
                     className="select select-bordered w-full bg-base-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0"
                   >
                     <option value="">Select</option>
@@ -235,6 +317,7 @@ export function Profile() {
                 value={formData.profilePicture}
                 onChange={handleChange}
                 error={errors.profilePicture}
+                disabled={!isEditing}
                 className="input-md"
               />
               <div className="form-control w-full">
@@ -249,6 +332,7 @@ export function Profile() {
                   onChange={handleChange}
                   rows={3}
                   className="textarea textarea-bordered w-full bg-base-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                  disabled={!isEditing}
                 />
               </div>
               <Input
@@ -259,26 +343,17 @@ export function Profile() {
                 placeholder="React, Node.js, TypeScript"
                 value={formData.skillsInput}
                 onChange={handleChange}
+                disabled={!isEditing}
                 className="input-md"
               />
-              <Button type="submit" fullWidth loading={loading} className="btn-lg">
-                Save profile
-              </Button>
+              {isEditing && (
+                <Button type="submit" fullWidth loading={loading} className="btn-lg">
+                  Save profile
+                </Button>
+              )}
             </form>
           </div>
 
-          {/* Live preview – how your profile looks to others */}
-          <div className="w-full max-w-lg lg:sticky lg:top-6 shrink-0 flex flex-col min-h-0">
-            <ProfileCard
-              stretch
-              displayName={displayName}
-              displayAgeGender={displayAgeGender}
-              avatarUrl={previewAvatar}
-              about={formData.about}
-              skills={formData.skills ?? []}
-              className="flex-1 flex flex-col min-h-0"
-            />
-          </div>
         </div>
       </main>
 

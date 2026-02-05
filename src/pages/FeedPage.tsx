@@ -45,7 +45,8 @@ export function Feed() {
   })
 
   const topUser = users[0]
-  const swipeThreshold = 100
+  // Slightly lower threshold so swipes feel easier, especially on mobile.
+  const swipeThreshold = 60
 
   const visibleUsers = useMemo(() => users.slice(0, 3), [users])
 
@@ -222,7 +223,7 @@ export function Feed() {
     <div className={rootClassName}>
       <main className="flex-1 px-4 sm:px-6 py-6 sm:py-8 flex flex-col items-center">
         <h1 className="text-2xl sm:text-3xl font-bold text-base-content mb-6">Feed</h1>
-        <div className="relative w-full max-w-md sm:max-w-lg flex-1 flex flex-col items-center justify-center">
+        <div className="relative w-full max-w-sm sm:max-w-md flex-1 flex flex-col items-center justify-center">
           {visibleUsers.map((u, index) => {
             const isTop = index === 0
             const offset = index
@@ -249,9 +250,9 @@ export function Feed() {
                 onPointerUp={isTop ? handlePointerUp : undefined}
                 onPointerCancel={isTop ? handlePointerUp : undefined}
               >
-                <div className="relative w-full max-w-sm">
+                <div className="relative w-full max-w-xs sm:max-w-sm">
                   <ProfileCard
-                    size="md"
+                    size="sm"
                     displayName={userToDisplayName(u)}
                     displayAgeGender={userToDisplayAgeGender(u) || undefined}
                     avatarUrl={u.profilePicture?.trim() || DEFAULT_AVATAR}

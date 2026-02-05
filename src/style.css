@@ -21,6 +21,14 @@ input:-webkit-autofill {
   }
 }
 
+/* Utility: clamp text to two lines (used in profile cards) */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* Animated border: @property lets us animate --angle so the gradient "snake" runs smoothly */
 @property --angle {
   syntax: "<angle>";

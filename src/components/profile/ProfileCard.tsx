@@ -50,7 +50,7 @@ export function ProfileCard({
   const figureClass = stretch
     ? 'relative w-full flex-1 min-h-48 shrink-0 bg-base-300 overflow-hidden'
     : isCompact
-      ? 'relative w-full aspect-[3/4] min-h-36 sm:min-h-40 shrink-0 bg-base-300 overflow-hidden'
+      ? 'relative w-full aspect-[4/3] min-h-30 sm:min-h-40 shrink-0 bg-base-300 overflow-hidden'
       : 'relative w-full aspect-[3/4] min-h-56 sm:min-h-64 shrink-0 bg-base-300 overflow-hidden'
 
   return (

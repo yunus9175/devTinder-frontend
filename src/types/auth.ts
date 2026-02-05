@@ -10,6 +10,11 @@ export interface User {
   skills?: string[]
   createdAt?: string
   updatedAt?: string
+  connectionCounts?: {
+    pendingIncoming: number
+    pendingOutgoing: number
+    accepted: number
+  }
 }
 
 export interface LoginPayload {

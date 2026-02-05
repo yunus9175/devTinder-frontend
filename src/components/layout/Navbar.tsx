@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ROUTES } from '../../constants/index'
 import { logout } from '../../api/auth.ts'
@@ -11,6 +12,8 @@ interface NavbarProps {
 }
 
 export function Navbar({ hidden = false }: NavbarProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const divRef = useRef<HTMLDivElement | null>(null)
   const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -18,6 +21,12 @@ export function Navbar({ hidden = false }: NavbarProps) {
   const profilePicture = user?.profilePicture ?? DEFAULT_AVATAR
   const isLoginPage = location.pathname === ROUTES.LOGIN
   const isSignupPage = location.pathname === ROUTES.SIGNUP
+
+
+  // Close dropdown whenever route changes (after clicking any nav item)
+  useEffect(() => {
+    setIsDropdownOpen(false)
+  }, [location.pathname])
 
   const handleLogout = async () => {
     try {
@@ -32,7 +41,7 @@ export function Navbar({ hidden = false }: NavbarProps) {
 
   return (
     <div className={`navbar bg-base-300 shadow-sm sticky top-0 z-20 transition-transform duration-300 ease-out ${translateClass}`}>
-      <div className="flex-1 flex items-center gap-2 sm:gap-4 justify-between">
+      <div className="flex-1 flex items-center gap-2 sm:gap-4 justify-between " ref={divRef}>
         <Link to={ROUTES.HOME} className="btn btn-ghost text-xl">
           DevTinder
         </Link>
@@ -54,8 +63,16 @@ export function Navbar({ hidden = false }: NavbarProps) {
           </Link>
         )}
         {!isLoginPage && !isSignupPage && user && (
-          <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
+          <div
+
+            className={`dropdown dropdown-end ${isDropdownOpen ? 'dropdown-open' : 'dropdown-close'}`}
+          >
+            <div
+              tabIndex={0}
+              role="button"
+              className="btn btn-ghost btn-circle avatar"
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+            >
               <div className="w-10 rounded-full">
                 <img
                   alt={`${user.firstName} profile`}
@@ -69,7 +86,7 @@ export function Navbar({ hidden = false }: NavbarProps) {
             </div>
             <ul
               tabIndex={-1}
-              className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
+              className={`menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow ${isDropdownOpen ? 'dropdown-open' : 'dropdown-close'}`}
             >
               <li>
                 <Link to={ROUTES.PROFILE} className="justify-between">

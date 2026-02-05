@@ -10,6 +10,7 @@ import {
   setRequestsError,
   setRequestsLoading,
 } from '../store/slices/requestsSlice'
+import { updateConnectionCounts } from '../store/slices/authSlice'
 import type { ConnectionRequest, User } from '../types/auth'
 
 const DEFAULT_AVATAR =
@@ -66,6 +67,20 @@ export function Requests() {
     reviewRequest(req._id, status)
       .then(() => {
         dispatch(removeRequest(req._id))
+        if (status === 'accepted') {
+          dispatch(
+            updateConnectionCounts({
+              pendingIncomingDelta: -1,
+              acceptedDelta: 1,
+            }),
+          )
+        } else {
+          dispatch(
+            updateConnectionCounts({
+              pendingIncomingDelta: -1,
+            }),
+          )
+        }
       })
       .catch((err) => {
         setActionError(err instanceof Error ? err.message : 'Failed to update request')
