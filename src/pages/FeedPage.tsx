@@ -25,6 +25,7 @@ export function Feed() {
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((state) => state.auth)
   const { users, loading, error } = useAppSelector((state) => state.feed)
+  const [isMobileLayout, setIsMobileLayout] = useState(false)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [fetchingMore, setFetchingMore] = useState(false)
@@ -49,6 +50,18 @@ export function Feed() {
   const swipeThreshold = 60
 
   const visibleUsers = useMemo(() => users.slice(0, 3), [users])
+
+  // Detect mobile layout based on viewport width; used to disable drag and show tap buttons
+  useEffect(() => {
+    const update = () => {
+      if (typeof window !== 'undefined') {
+        setIsMobileLayout(window.innerWidth < 640)
+      }
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
 
   useEffect(() => {
     if (!user) {
@@ -149,7 +162,8 @@ export function Feed() {
   }
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!topUser || processingId) return
+    // Disable drag/swipe on mobile layout; only allow on larger screens
+    if (isMobileLayout || !topUser || processingId) return
     e.preventDefault()
     e.currentTarget.setPointerCapture(e.pointerId)
     setDragState({
@@ -259,6 +273,27 @@ export function Feed() {
                     about={u.about}
                     skills={u.skills}
                   />
+                  {/* Mobile-only overlay buttons on image corners; drag only on larger screens */}
+                  {isMobileLayout && isTop && (
+                    <div className="absolute inset-x-0 top-3 flex items-center justify-between px-3 sm:hidden">
+                      <button
+                        type="button"
+                        className="btn btn-circle btn-outline btn-error text-base shadow-lg"
+                        disabled={!topUser || !!processingId}
+                        onClick={() => handleReview('left')}
+                      >
+                        ✕
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-circle btn-primary text-base shadow-lg"
+                        disabled={!topUser || !!processingId}
+                        onClick={() => handleReview('right')}
+                      >
+                        ❤
+                      </button>
+                    </div>
+                  )}
                   {showLike && (
                     <div
                       className="absolute top-4 left-4 px-3 py-1 border-2 border-success text-success font-bold text-sm rounded-md bg-base-100/80"
@@ -280,7 +315,8 @@ export function Feed() {
             )
           })}
         </div>
-        <div className="mt-6 flex items-center justify-center gap-4">
+        {/* Desktop / larger-screen controls under the card */}
+        <div className="mt-6 hidden sm:flex items-center justify-center gap-4">
           <button
             type="button"
             className="btn btn-circle btn-outline btn-error text-xl"
