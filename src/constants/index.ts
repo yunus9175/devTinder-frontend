@@ -16,6 +16,7 @@ export const ROUTES = {
   PROFILE: '/profile',
   CONNECTIONS: '/connections',
   REQUESTS: '/requests',
+  PAYMENT: '/payment',
 } as const
 
 /**

@@ -29,7 +29,9 @@ const Connections = lazy(() =>
 const Requests = lazy(() =>
   import('./pages/RequestsPage').then((m) => ({ default: m.Requests })),
 )
-
+const Payments = lazy(() =>
+  import('./pages/Payments').then((m) => ({ default: m.Payments })),
+)
 export default function App() {
   return (
     <BrowserRouter>
@@ -46,6 +48,7 @@ export default function App() {
             <Route path={ROUTES.PROFILE} element={<Profile />} />
             <Route path={ROUTES.CONNECTIONS} element={<Connections />} />
             <Route path={ROUTES.REQUESTS} element={<Requests />} />
+            <Route path={ROUTES.PAYMENT} element={<Payments />} />
           </Route>
         </Routes>
       </Suspense>

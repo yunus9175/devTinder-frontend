@@ -14,6 +14,7 @@ interface NavbarProps {
 export function Navbar({ hidden = false }: NavbarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const divRef = useRef<HTMLDivElement | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
   const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -21,6 +22,45 @@ export function Navbar({ hidden = false }: NavbarProps) {
   const profilePicture = user?.profilePicture ?? DEFAULT_AVATAR
   const isLoginPage = location.pathname === ROUTES.LOGIN
   const isSignupPage = location.pathname === ROUTES.SIGNUP
+
+  // Close dropdown when clicking anywhere outside the navbar container
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!isDropdownOpen) return
+      if (containerRef.current && containerRef.current.contains(event.target as Node)) {
+        if (timer) {
+          clearTimeout(timer)
+        }
+        timer = setTimeout(() => {
+          setIsDropdownOpen(false)
+        }, 500)
+      } else {
+        setIsDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isDropdownOpen])
+
+  //   let timer: ReturnType<typeof setTimeout>;
+  //   const handleClickOutside = () => {
+  //     if (!isDropdownOpen) return
+  //     if (timer) clearTimeout(timer)
+  //     timer = setTimeout(() => {
+  //       setIsDropdownOpen(false)
+  //     }, 500)
+  //   }
+
+  //   document.addEventListener('mousedown', handleClickOutside)
+  //   return () => {
+  //     document.removeEventListener('mousedown', handleClickOutside)
+  //     if (timer) clearTimeout(timer)
+  //   }
+  // }, [isDropdownOpen])
 
 
   // Close dropdown whenever route changes (after clicking any nav item)
@@ -86,12 +126,12 @@ export function Navbar({ hidden = false }: NavbarProps) {
             </div>
             <ul
               tabIndex={-1}
+              ref={containerRef as unknown as React.RefObject<HTMLUListElement>}
               className={`menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow ${isDropdownOpen ? 'dropdown-open' : 'dropdown-close'}`}
             >
               <li>
                 <Link to={ROUTES.PROFILE} className="justify-between">
                   Profile
-                  <span className="badge">New</span>
                 </Link>
               </li>
               <li>
@@ -100,7 +140,9 @@ export function Navbar({ hidden = false }: NavbarProps) {
               <li>
                 <Link to={ROUTES.REQUESTS}>Requests</Link>
               </li>
-              <li><a>Settings</a></li>
+              <li>
+                <Link to={ROUTES.PAYMENT}>Payments</Link>
+              </li>
               <li><button type="button" onClick={handleLogout}>Logout</button></li>
             </ul>
           </div>
