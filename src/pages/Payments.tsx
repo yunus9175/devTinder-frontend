@@ -16,6 +16,7 @@ declare global {
             handler: (response: { razorpay_payment_id: string; razorpay_order_id: string }) => void
             prefill?: { email?: string; name?: string }
             theme?: { color?: string }
+            modal?: { ondismiss?: () => void }
         }) => { open: () => void }
     }
 }
@@ -23,6 +24,7 @@ declare global {
 export function Payments() {
     const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
+    const [toast, setToast] = useState<string | null>(null)
 
     const openRazorpay = useCallback((order: OrderEntity, planName: string, keyId: string) => {
         const rzp = new window.Razorpay({
@@ -33,18 +35,30 @@ export function Payments() {
             name: 'DevTinder',
             description: `${planName} plan`,
             prefill: {
-                email: 'yunus619@gmail.com',
-                name: 'Yunus',
+                email: 'yunus616@gmail.com',
+                name: 'Yunus626',
             },
             theme: {
                 color: '#F37254',
             },
             handler(response: { razorpay_payment_id: string; razorpay_order_id: string }) {
                 console.log(response)
-                // Payment success – backend can verify via webhook or verify-payment API
+                setToast('Payment successful!')
+                setTimeout(() => setToast(null), 3000)
+                // Backend can verify via webhook or verify-payment API
+            },
+            modal: {
+                ondismiss: () => {
+                    setToast('Payment cancelled')
+                    setTimeout(() => setToast(null), 3000)
+                },
             },
         })
-        rzp.open()
+        try {
+            rzp.open()
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Could not open payment. Check key and order.')
+        }
     }, [])
 
     async function handleChoosePlan(planId: string) {
@@ -86,6 +100,14 @@ export function Payments() {
                         <button type="button" className="btn btn-ghost btn-sm" onClick={() => setError(null)}>
                             Dismiss
                         </button>
+                    </div>
+                )}
+
+                {toast && (
+                    <div className="toast toast-top toast-center z-50">
+                        <div className={`alert shadow-lg ${toast.includes('success') ? 'alert-success' : 'alert-info'}`}>
+                            <span>{toast}</span>
+                        </div>
                     </div>
                 )}
 

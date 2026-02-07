@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthInitializer } from './components/auth/AuthInitializer'
+import { UnauthorizedHandler } from './components/auth/UnauthorizedHandler'
 import { GuestOnly } from './components/auth/GuestOnly'
 import { PageLoader } from './components/ui/PageLoader'
 import { ROUTES } from './constants'
@@ -36,6 +37,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthInitializer />
+      <UnauthorizedHandler />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route element={<Layout />}>
