@@ -161,7 +161,7 @@ export function Profile() {
             {/* Avatar overlapping banner / content */}
             <div className="px-5 sm:px-8 pb-6">
               <div className="flex flex-col items-center sm:items-start -mt-12">
-                <div className="avatar mb-3">
+                <div className="avatar mb-3 relative inline-block">
                   <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full ring ring-base-100 ring-offset-[3px] ring-offset-base-100 border-4 border-base-100 overflow-hidden shadow-lg">
                     <img
                       src={previewAvatar}
@@ -173,6 +173,17 @@ export function Profile() {
                       }}
                     />
                   </div>
+                  {user.isPremium && (
+                    <span
+                      className="absolute bottom-0 right-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#1DA1F2] flex items-center justify-center border-2 border-base-100 shrink-0 shadow"
+                      title="Premium"
+                      aria-label="Premium member"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </span>
+                  )}
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-base-content text-center sm:text-left w-full">
                   {displayName}

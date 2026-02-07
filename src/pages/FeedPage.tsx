@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getFeed, sendIgnoredRequest, sendInterestedRequest } from '../api/auth'
 import { ProfileCard } from '../components/profile'
@@ -45,6 +45,8 @@ export function Feed() {
     y: 0,
   })
 
+  const initialFetchDone = useRef(false)
+
   const topUser = users[0]
   // Slightly lower threshold so swipes feel easier, especially on mobile.
   const swipeThreshold = 60
@@ -63,32 +65,35 @@ export function Feed() {
     return () => window.removeEventListener('resize', update)
   }, [])
 
+  // Initial feed load: only when user is set and feed is empty. Ref guards against Strict Mode double-invoke in dev.
   useEffect(() => {
     if (!user) {
       navigate(ROUTES.LOGIN, { replace: true })
       return
     }
-    if (users.length === 0) {
-      dispatch(setFeedLoading(true))
-      setToast(null)
-      getFeed(1)
-        .then(({ data }) => {
-          dispatch(setFeed(data))
-          setPage(1)
-          setHasMore(data.length > 0)
-        })
-        .catch((err) => {
-          dispatch(setFeedError(err instanceof Error ? err.message : 'Failed to load feed'))
-        })
-        .finally(() => {
-          dispatch(setFeedLoading(false))
-        })
-    }
-  }, [user, dispatch, navigate])
+    if (users.length > 0) return
+    if (initialFetchDone.current) return
+    initialFetchDone.current = true
+    dispatch(setFeedLoading(true))
+    setToast(null)
+    getFeed(1)
+      .then(({ data }) => {
+        dispatch(setFeed(data))
+        setPage(1)
+        setHasMore(data.length > 0)
+      })
+      .catch((err) => {
+        dispatch(setFeedError(err instanceof Error ? err.message : 'Failed to load feed'))
+      })
+      .finally(() => {
+        dispatch(setFeedLoading(false))
+      })
+  }, [user, dispatch, navigate, users.length])
 
-  // Prefetch next page when deck is getting low
+  // Prefetch next page only after initial load, when deck is getting low (avoid calling getFeed(2) on mount)
   useEffect(() => {
     if (!user) return
+    if (users.length === 0) return
     if (!hasMore || fetchingMore || loading) return
     if (users.length > 3) return
 

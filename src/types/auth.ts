@@ -10,6 +10,9 @@ export interface User {
   skills?: string[]
   createdAt?: string
   updatedAt?: string
+  isPremium?: boolean
+  membershipType?: string
+  membershipExpiry?: string
   connectionCounts?: {
     pendingIncoming: number
     pendingOutgoing: number

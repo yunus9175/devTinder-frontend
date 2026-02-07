@@ -110,19 +110,31 @@ export function Navbar({ hidden = false }: NavbarProps) {
             <div
               tabIndex={0}
               role="button"
-              className="btn btn-ghost btn-circle avatar"
+              className="btn btn-ghost btn-circle avatar relative overflow-visible w-10 h-10 min-h-0 min-w-0 p-0"
               onClick={() => setIsDropdownOpen((prev) => !prev)}
             >
-              <div className="w-10 rounded-full">
+              <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 ring-2 ring-base-300 ring-offset-0">
                 <img
                   alt={`${user.firstName} profile`}
                   src={profilePicture}
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     // Fallback to default avatar if image fails to load
                     ; (e.target as HTMLImageElement).src = DEFAULT_AVATAR
                   }}
                 />
               </div>
+              {user.isPremium && (
+                <span
+                  className="absolute -right-0.5 -bottom-0.5 w-3 h-3 rounded-full bg-[#1DA1F2] flex items-center justify-center shrink-0 shadow-md ring-2 ring-base-300"
+                  title="Premium"
+                  aria-label="Premium member"
+                >
+                  <svg viewBox="0 0 24 24" className="w-3 h-3 text-white" fill="currentColor" aria-hidden>
+                    <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
+                  </svg>
+                </span>
+              )}
             </div>
             <ul
               tabIndex={-1}

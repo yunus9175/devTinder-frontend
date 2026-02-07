@@ -5,20 +5,38 @@ interface PaymentPlanCardProps {
   plan: PaymentPlan
   amount: number | null
   isLoading: boolean
+  isCurrentPlan: boolean
   onChoosePlan: () => void
 }
 
-export function PaymentPlanCard({ plan, amount, isLoading, onChoosePlan }: PaymentPlanCardProps) {
-  const isBasic = plan.id === 'basic'
-  const isFeatured = plan.featured
+export function PaymentPlanCard({
+  plan,
+  amount,
+  isLoading,
+  isCurrentPlan,
+  onChoosePlan,
+}: PaymentPlanCardProps) {
+  const isFeatured = plan.featured && !isCurrentPlan
 
   return (
     <article
-      className={`relative card bg-base-100 border ${
-        isFeatured ? 'border-primary shadow-2xl scale-[1.02]' : 'border-base-300 shadow-lg'
-      } transition-transform`}
+      className={`relative card bg-base-100 border transition-transform ${
+        isCurrentPlan
+          ? 'border-primary shadow-xl ring-2 ring-primary/20 scale-[1.02]'
+          : isFeatured
+            ? 'border-primary shadow-2xl scale-[1.02]'
+            : 'border-base-300 shadow-lg'
+      }`}
     >
-      {isFeatured && plan.badge && (
+      {isCurrentPlan && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+          <span className="badge badge-success badge-sm gap-1">
+            <span aria-hidden>✓</span>
+            Current Plan
+          </span>
+        </div>
+      )}
+      {!isCurrentPlan && isFeatured && plan.badge && (
         <div className="absolute -top-3 right-4">
           <span className="badge badge-primary badge-sm">{plan.badge}</span>
         </div>
@@ -50,17 +68,19 @@ export function PaymentPlanCard({ plan, amount, isLoading, onChoosePlan }: Payme
           <Button
             type="button"
             fullWidth
-            disabled={isBasic || isLoading}
+            disabled={isCurrentPlan || isLoading}
             className={`btn-md ${
-              isFeatured
-                ? 'btn-primary'
-                : 'btn-outline border-primary text-primary hover:bg-primary hover:text-primary-content'
+              isCurrentPlan
+                ? 'btn-disabled bg-base-200 text-base-content/70 cursor-default'
+                : isFeatured
+                  ? 'btn-primary'
+                  : 'btn-outline border-primary text-primary hover:bg-primary hover:text-primary-content'
             }`}
             onClick={onChoosePlan}
           >
             {isLoading ? (
               <span className="loading loading-spinner loading-sm" />
-            ) : isBasic ? (
+            ) : isCurrentPlan ? (
               'Current plan'
             ) : (
               'Choose plan'

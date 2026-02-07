@@ -39,6 +39,11 @@ function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Request failed'
 }
 
+/** Response from GET /premium/verify – no request body. */
+export interface VerifyPremiumResponse {
+  isPremium: boolean
+}
+
 /**
  * Creates a payment order via POST /payment/create.
  * Use the returned order.id for checkout (e.g. Razorpay).
@@ -50,6 +55,22 @@ export async function createOrder(payload: CreateOrderPayload): Promise<CreateOr
       return data
     }
     throw new Error('Invalid payment/create response')
+  } catch (err) {
+    throw new Error(getErrorMessage(err))
+  }
+}
+
+/**
+ * Checks if the current user has an active premium membership.
+ * No request body. Call after Razorpay success to confirm and then refresh profile.
+ */
+export async function verifyPremium(): Promise<VerifyPremiumResponse> {
+  try {
+    const { data } = await api.get<VerifyPremiumResponse>('/premium/verify')
+    if (data && typeof data.isPremium === 'boolean') {
+      return data
+    }
+    return { isPremium: false }
   } catch (err) {
     throw new Error(getErrorMessage(err))
   }

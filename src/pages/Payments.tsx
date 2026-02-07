@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react'
-import { createOrder } from '../api/payment'
-import type { OrderEntity } from '../api/payment'
+import { getProfile } from '../api/auth'
+import { createOrder, verifyPremium, type OrderEntity } from '../api/payment'
 import { PaymentPlanCard } from '../components/payment/PaymentPlanCard'
 import { PLANS, membershipAmount } from '../constants/payment'
+import { useAppDispatch, useAppSelector } from '../store'
+import { setCredentials } from '../store/slices/authSlice'
 
 declare global {
     interface Window {
@@ -22,6 +24,9 @@ declare global {
 }
 
 export function Payments() {
+    const dispatch = useAppDispatch()
+    const user = useAppSelector((s) => s.auth.user)
+    const currentPlanId = (user?.membershipType ?? 'basic') as 'basic' | 'standard' | 'premium'
     const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [toast, setToast] = useState<string | null>(null)
@@ -41,11 +46,23 @@ export function Payments() {
             theme: {
                 color: '#F37254',
             },
-            handler(response: { razorpay_payment_id: string; razorpay_order_id: string }) {
-                console.log(response)
-                setToast('Payment successful!')
-                setTimeout(() => setToast(null), 3000)
-                // Backend can verify via webhook or verify-payment API
+            handler() {
+                verifyPremium()
+                    .then(({ isPremium }) => {
+                        return getProfile().then((res) => ({ isPremium, user: res.user }))
+                    })
+                    .then(({ isPremium, user }) => {
+                        dispatch(setCredentials(user))
+                        if (isPremium) {
+                            setToast("You're now a premium member! Enjoy your benefits.")
+                        } else {
+                            setToast('Payment successful!')
+                        }
+                        setTimeout(() => setToast(null), 4000)
+                    })
+                    .catch((err) => {
+                        setError(err instanceof Error ? err.message : 'Payment verification failed')
+                    })
             },
             modal: {
                 ondismiss: () => {
@@ -59,7 +76,7 @@ export function Payments() {
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Could not open payment. Check key and order.')
         }
-    }, [])
+    }, [dispatch])
 
     async function handleChoosePlan(planId: string) {
         const plan = PLANS.find((p) => p.id === planId)
@@ -105,7 +122,7 @@ export function Payments() {
 
                 {toast && (
                     <div className="toast toast-top toast-center z-50">
-                        <div className={`alert shadow-lg ${toast.includes('success') ? 'alert-success' : 'alert-info'}`}>
+                        <div className={`alert shadow-lg ${toast.includes('success') || toast.includes('premium') ? 'alert-success' : 'alert-info'}`}>
                             <span>{toast}</span>
                         </div>
                     </div>
@@ -125,6 +142,7 @@ export function Payments() {
                                         : null
                             }
                             isLoading={loadingPlanId === plan.id}
+                            isCurrentPlan={plan.id === currentPlanId}
                             onChoosePlan={() => handleChoosePlan(plan.id)}
                         />
                     ))}
