@@ -52,8 +52,7 @@ function getSocketServerUrl(): string {
 
 /** Socket path when backend uses a base path (e.g. /api/socket.io). */
 export function getSocketPath(): string {
-  const base = (API_BASE_PATH || '').trim()
-  return base ? (base.startsWith('/') ? base : '/' + base) + '/socket.io' : '/socket.io'
+  return location.pathname === "localhost" ? '/socket.io' : '/api/socket.io'
 }
 
 // ---------------------------------------------------------------------------
