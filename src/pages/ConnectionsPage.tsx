@@ -28,6 +28,8 @@ export function Connections() {
     handleSend,
     handleInputChange,
     openingChat,
+    openConversationError,
+    retryOpenChat,
     onlineUserIds,
     typingUserId,
     unreadByConnection,
@@ -100,6 +102,8 @@ export function Connections() {
               messages={messages}
               inputMessage={inputMessage}
               openingChat={openingChat}
+              openConversationError={openConversationError}
+              onRetryOpenChat={retryOpenChat}
               onlineUserIds={onlineUserIds}
               typingUserId={typingUserId}
               messagesScrollRef={messagesScrollRef}

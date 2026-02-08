@@ -50,6 +50,8 @@ export function useConnectionsChat() {
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set())
   const [typingUserId, setTypingUserId] = useState<string | null>(null)
   const [unreadByConnection, setUnreadByConnection] = useState<Record<string, number>>({})
+  const [openConversationError, setOpenConversationError] = useState<string | null>(null)
+  const [openChatAttempt, setOpenChatAttempt] = useState(0)
 
   const socketRef = useRef<Socket | null>(null)
   const selectedConnectionIdRef = useRef<string | null>(null)
@@ -184,10 +186,12 @@ export function useConnectionsChat() {
       }
       previousConversationIdRef.current = null
       setCurrentConversationId(null)
+      setOpenConversationError(null)
       return
     }
     const otherUserId = selectedConnection._id
     setCurrentConversationId(null)
+    setOpenConversationError(null)
     setOpeningChat(true)
     const leavePrevious = () => {
       if (previousConversationIdRef.current && socketRef.current?.connected) {
@@ -215,10 +219,19 @@ export function useConnectionsChat() {
       })
       .catch((err) => {
         console.error('Open chat error:', err)
-        setSelectedConnection(null)
+        const message =
+          err.response?.data?.message ||
+          (err instanceof Error ? err.message : 'Failed to get conversation')
+        setOpenConversationError(message)
+        // Keep selectedConnection so user stays on chat screen and can retry
       })
       .finally(() => setOpeningChat(false))
-  }, [user?.isPremium, selectedConnection?._id])
+  }, [user?.isPremium, selectedConnection?._id, openChatAttempt])
+
+  const retryOpenChat = useCallback(() => {
+    setOpenConversationError(null)
+    setOpenChatAttempt((a) => a + 1)
+  }, [])
 
   // Mark as read: only for messages we haven't already marked (avoid duplicate API calls)
   useEffect(() => {
@@ -327,6 +340,8 @@ export function useConnectionsChat() {
     handleSend,
     handleInputChange,
     openingChat,
+    openConversationError,
+    retryOpenChat,
     onlineUserIds,
     typingUserId,
     unreadByConnection,

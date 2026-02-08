@@ -10,6 +10,8 @@ interface ChatPanelProps {
   messages: Message[]
   inputMessage: string
   openingChat: boolean
+  openConversationError: string | null
+  onRetryOpenChat: () => void
   onlineUserIds: Set<string>
   typingUserId: string | null
   messagesScrollRef: React.RefObject<HTMLDivElement | null>
@@ -25,6 +27,8 @@ export function ChatPanel({
   messages,
   inputMessage,
   openingChat,
+  openConversationError,
+  onRetryOpenChat,
   onlineUserIds,
   typingUserId,
   messagesScrollRef,
@@ -42,6 +46,18 @@ export function ChatPanel({
 
   return (
     <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
+      {openConversationError && (
+        <div className="shrink-0 flex items-center justify-between gap-3 px-3 py-2 bg-error/10 text-error text-sm border-b border-error/20">
+          <span>{openConversationError}</span>
+          <button
+            type="button"
+            className="btn btn-sm btn-ghost"
+            onClick={onRetryOpenChat}
+          >
+            Retry
+          </button>
+        </div>
+      )}
       <ChatHeader
         connection={selectedConnection}
         isOnline={onlineUserIds.has(selectedConnection._id)}
