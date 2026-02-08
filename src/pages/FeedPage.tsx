@@ -5,9 +5,8 @@ import { ProfileCard } from '../components/profile'
 import { ROUTES } from '../constants'
 import { useAppDispatch, useAppSelector } from '../store'
 import { appendFeed, popFeedUser, setFeed, setFeedError, setFeedLoading } from '../store/slices/feedSlice'
+import { DEFAULT_AVATAR } from '../lib/imageUtils'
 import type { User } from '../types/auth'
-
-const DEFAULT_AVATAR = 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
 
 function userToDisplayName(u: User): string {
   return [u.firstName?.trim(), u.lastName?.trim()].filter(Boolean).join(' ') || 'Unknown'

@@ -6,10 +6,9 @@ import { Input } from '../components/ui/Input'
 import { ROUTES } from '../constants/index.ts'
 import { useAppDispatch, useAppSelector } from '../store/index.ts'
 import { setCredentials } from '../store/slices/authSlice'
+import { DEFAULT_AVATAR, getProxiedFallback } from '../lib/imageUtils'
 import { validateProfileFields } from '../lib/validation.ts'
 import type { UpdateProfilePayload } from '../types/auth.ts'
-
-const DEFAULT_AVATAR = 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
 
 export function Profile() {
   const navigate = useNavigate()
@@ -118,6 +117,7 @@ export function Profile() {
   const displayName = [formData.firstName.trim(), formData.lastName.trim()].filter(Boolean).join(' ') || 'Your name'
   const displayAgeGender = [formData.ageInput.trim(), formData.gender?.trim()].filter(Boolean).join(', ') || 'Age, gender'
   const previewAvatar = formData.profilePicture?.trim() || DEFAULT_AVATAR
+  const proxiedAvatar = getProxiedFallback(previewAvatar)
   const connectionCounts = user.connectionCounts
   const pendingIncoming = connectionCounts?.pendingIncoming ?? 0
   const acceptedConnections = connectionCounts?.accepted ?? 0
@@ -167,9 +167,14 @@ export function Profile() {
                       src={previewAvatar}
                       alt={displayName}
                       className="w-full h-full object-cover object-top"
+                      referrerPolicy="no-referrer"
                       onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.src = DEFAULT_AVATAR
+                        const img = e.target as HTMLImageElement
+                        if (proxiedAvatar && img.src !== proxiedAvatar) {
+                          img.src = proxiedAvatar
+                        } else {
+                          img.src = DEFAULT_AVATAR
+                        }
                       }}
                     />
                   </div>

@@ -2,10 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ROUTES } from '../../constants/index'
 import { logout } from '../../api/auth.ts'
+import { DEFAULT_AVATAR, getProxiedFallback } from '../../lib/imageUtils'
 import { useAppDispatch, useAppSelector } from '../../store/index.ts'
 import { clearCredentials } from '../../store/slices/authSlice'
-
-const DEFAULT_AVATAR = 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
 
 interface NavbarProps {
   hidden?: boolean
@@ -20,6 +19,7 @@ export function Navbar({ hidden = false }: NavbarProps) {
   const dispatch = useAppDispatch()
   const user = useAppSelector((state) => state.auth.user)
   const profilePicture = user?.profilePicture ?? DEFAULT_AVATAR
+  const proxiedPicture = getProxiedFallback(profilePicture)
   const isLoginPage = location.pathname === ROUTES.LOGIN
   const isSignupPage = location.pathname === ROUTES.SIGNUP
 
@@ -118,9 +118,16 @@ export function Navbar({ hidden = false }: NavbarProps) {
                   alt={`${user.firstName} profile`}
                   src={profilePicture}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
                   onError={(e) => {
-                    // Fallback to default avatar if image fails to load
-                    ; (e.target as HTMLImageElement).src = DEFAULT_AVATAR
+                    const img = e.target as HTMLImageElement
+                    if (proxiedPicture && img.src !== proxiedPicture) {
+                      img.src = proxiedPicture
+                    } else {
+                      img.src = DEFAULT_AVATAR
+                    }
                   }}
                 />
               </div>
