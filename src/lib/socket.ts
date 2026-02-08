@@ -3,7 +3,7 @@
  * Connects using API base URL and optional path (e.g. /api/socket.io).
  */
 import { io, type Socket } from 'socket.io-client'
-import { API_BASE_PATH, API_BASE_URL } from '../constants'
+import { API_BASE_URL } from '../constants'
 
 // ---------------------------------------------------------------------------
 // Types (match backend: API and receiveMessage)
