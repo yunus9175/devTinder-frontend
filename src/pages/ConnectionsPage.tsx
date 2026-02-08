@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ROUTES } from '../constants'
+import { useAppSelector } from '../store'
 import {
   useConnectionsChat,
   ConnectionsList,
@@ -38,9 +39,21 @@ export function Connections() {
     messagesScrollRef,
   } = chat
 
+  const sessionRestoring = useAppSelector((state) => state.auth.sessionRestoring)
+
   useEffect(() => {
+    if (sessionRestoring) return
     if (!user) navigate(ROUTES.LOGIN, { replace: true })
-  }, [user, navigate])
+  }, [user, sessionRestoring, navigate])
+
+  if (sessionRestoring) {
+    return (
+      <div className="min-h-dvh flex flex-col items-center justify-center safe-area-padding px-4">
+        <span className="loading loading-spinner loading-lg text-primary" />
+        <p className="mt-4 text-base-content/70">Loading...</p>
+      </div>
+    )
+  }
 
   if (!user) return null
 

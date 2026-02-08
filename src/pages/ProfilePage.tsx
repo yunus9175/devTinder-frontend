@@ -13,7 +13,7 @@ import type { UpdateProfilePayload } from '../types/auth.ts'
 export function Profile() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const user = useAppSelector((state) => state.auth.user)
+  const { user, sessionRestoring } = useAppSelector((state) => state.auth)
   const [formData, setFormData] = useState<UpdateProfilePayload & { skillsInput: string; ageInput: string }>({
     firstName: '',
     lastName: '',
@@ -39,6 +39,7 @@ export function Profile() {
   }
 
   useEffect(() => {
+    if (sessionRestoring) return
     if (!user) {
       navigate(ROUTES.LOGIN, { replace: true })
       return
@@ -54,7 +55,7 @@ export function Profile() {
       skills: user.skills ?? [],
       skillsInput: (user.skills ?? []).join(', '),
     })
-  }, [user, navigate])
+  }, [user, sessionRestoring, navigate])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -109,6 +110,15 @@ export function Profile() {
     const t = setTimeout(() => setShowSuccessToast(false), 3000)
     return () => clearTimeout(t)
   }, [showSuccessToast])
+
+  if (sessionRestoring) {
+    return (
+      <div className="min-h-dvh flex flex-col items-center justify-center safe-area-padding px-4">
+        <span className="loading loading-spinner loading-lg text-primary" />
+        <p className="mt-4 text-base-content/70">Loading...</p>
+      </div>
+    )
+  }
 
   if (!user) {
     return null

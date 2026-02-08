@@ -6,12 +6,18 @@ interface AuthState {
   isAuthenticated: boolean
   /** Tracks if user explicitly logged out in this SPA session. */
   hasLoggedOut: boolean
+  /**
+   * True until we've finished trying to restore session (e.g. getProfile on refresh).
+   * Prevents protected pages from redirecting to login before session restore completes.
+   */
+  sessionRestoring: boolean
 }
 
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
   hasLoggedOut: false,
+  sessionRestoring: true,
 }
 
 export const authSlice = createSlice({
@@ -28,6 +34,10 @@ export const authSlice = createSlice({
       state.user = action.payload
       state.isAuthenticated = true
       state.hasLoggedOut = false
+      state.sessionRestoring = false
+    },
+    setSessionRestoring: (state, action: { payload: boolean }) => {
+      state.sessionRestoring = action.payload
     },
     updateConnectionCounts: (
       state,
@@ -56,9 +66,11 @@ export const authSlice = createSlice({
       state.user = null
       state.isAuthenticated = false
       state.hasLoggedOut = true
+      state.sessionRestoring = false
     },
   },
 })
 
-export const { setCredentials, clearCredentials, updateConnectionCounts } = authSlice.actions
+export const { setCredentials, clearCredentials, updateConnectionCounts, setSessionRestoring } =
+  authSlice.actions
 export default authSlice.reducer

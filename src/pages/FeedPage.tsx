@@ -22,7 +22,7 @@ function userToDisplayAgeGender(u: User): string {
 export function Feed() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const { user } = useAppSelector((state) => state.auth)
+  const { user, sessionRestoring } = useAppSelector((state) => state.auth)
   const { users, loading, error } = useAppSelector((state) => state.feed)
   const [isMobileLayout, setIsMobileLayout] = useState(false)
   const [page, setPage] = useState(1)
@@ -64,12 +64,18 @@ export function Feed() {
     return () => window.removeEventListener('resize', update)
   }, [])
 
-  // Initial feed load: only when user is set and feed is empty. Ref guards against Strict Mode double-invoke in dev.
+  // Redirect to login only after session restore attempt (avoids redirect on refresh).
   useEffect(() => {
+    if (sessionRestoring) return
     if (!user) {
       navigate(ROUTES.LOGIN, { replace: true })
       return
     }
+  }, [user, sessionRestoring, navigate])
+
+  // Initial feed load: only when user is set and feed is empty. Ref guards against Strict Mode double-invoke in dev.
+  useEffect(() => {
+    if (!user || sessionRestoring) return
     if (users.length > 0) return
     if (initialFetchDone.current) return
     initialFetchDone.current = true
@@ -87,7 +93,7 @@ export function Feed() {
       .finally(() => {
         dispatch(setFeedLoading(false))
       })
-  }, [user, dispatch, navigate, users.length])
+  }, [user, sessionRestoring, dispatch, users.length])
 
   // Prefetch next page only after initial load, when deck is getting low (avoid calling getFeed(2) on mount)
   useEffect(() => {
@@ -201,6 +207,15 @@ export function Feed() {
     } else {
       resetDrag()
     }
+  }
+
+  if (sessionRestoring) {
+    return (
+      <div className="min-h-dvh flex flex-col items-center justify-center safe-area-padding px-4 sm:px-6 py-6 sm:py-8">
+        <span className="loading loading-spinner loading-lg text-primary" />
+        <p className="mt-4 text-base-content/70">Loading...</p>
+      </div>
+    )
   }
 
   if (!user) {

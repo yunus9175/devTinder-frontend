@@ -28,16 +28,21 @@ function userToDisplayAgeGender(u: User): string {
 export function Requests() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const { user } = useAppSelector((state) => state.auth)
+  const { user, sessionRestoring } = useAppSelector((state) => state.auth)
   const { items, loading, error } = useAppSelector((state) => state.requests)
   const [actionError, setActionError] = useState<string | null>(null)
   const [processingId, setProcessingId] = useState<string | null>(null)
 
   useEffect(() => {
+    if (sessionRestoring) return
     if (!user) {
       navigate(ROUTES.LOGIN, { replace: true })
       return
     }
+  }, [user, sessionRestoring, navigate])
+
+  useEffect(() => {
+    if (!user || sessionRestoring) return
     dispatch(setRequestsLoading(true))
     setActionError(null)
     getReceivedRequests()
@@ -52,7 +57,16 @@ export function Requests() {
       .finally(() => {
         dispatch(setRequestsLoading(false))
       })
-  }, [user, dispatch, navigate])
+  }, [user, sessionRestoring, dispatch])
+
+  if (sessionRestoring) {
+    return (
+      <div className="min-h-dvh flex flex-col items-center justify-center safe-area-padding px-4">
+        <span className="loading loading-spinner loading-lg text-primary" />
+        <p className="mt-4 text-base-content/70">Loading...</p>
+      </div>
+    )
+  }
 
   if (!user) {
     return null
