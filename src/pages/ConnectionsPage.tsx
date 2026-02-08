@@ -1,63 +1,50 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getConnections } from '../api/auth'
-import { ProfileCard } from '../components/profile'
 import { ROUTES } from '../constants'
-import { useAppDispatch, useAppSelector } from '../store'
 import {
-  setConnections,
-  setConnectionsError,
-  setConnectionsLoading,
-} from '../store/slices/connectionsSlice'
-import type { User } from '../types/auth'
-
-const DEFAULT_AVATAR =
-  'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
-
-function userToDisplayName(u: User): string {
-  return [u.firstName?.trim(), u.lastName?.trim()].filter(Boolean).join(' ') || 'Unknown'
-}
-
-function userToDisplayAgeGender(u: User): string {
-  const parts: string[] = []
-  if (u.age != null && u.age > 0) parts.push(String(u.age))
-  if (u.gender?.trim()) parts.push(u.gender.trim())
-  return parts.join(', ') || ''
-}
+  useConnectionsChat,
+  ConnectionsList,
+  ChatPanel,
+  EmptyChatPlaceholder,
+  PremiumUpsell,
+} from './connections'
 
 export function Connections() {
   const navigate = useNavigate()
-  const dispatch = useAppDispatch()
-  const { user } = useAppSelector((state) => state.auth)
-  const { users, loading, error } = useAppSelector((state) => state.connections)
+  const chat = useConnectionsChat()
+  const {
+    user,
+    loading,
+    error,
+    isPremium,
+    searchQuery,
+    setSearchQuery,
+    selectedConnection,
+    setSelectedConnection,
+    selectConnection,
+    filteredUsers,
+    messages,
+    inputMessage,
+    handleSend,
+    handleInputChange,
+    openingChat,
+    onlineUserIds,
+    typingUserId,
+    unreadByConnection,
+    lastMessagePreview,
+    messagesEndRef,
+    messagesScrollRef,
+  } = chat
 
   useEffect(() => {
-    if (!user) {
-      navigate(ROUTES.LOGIN, { replace: true })
-      return
-    }
-    dispatch(setConnectionsLoading(true))
-    getConnections()
-      .then(({ data }) => {
-        dispatch(setConnections(data))
-      })
-      .catch((err) => {
-        dispatch(
-          setConnectionsError(err instanceof Error ? err.message : 'Failed to load connections')
-        )
-      })
-      .finally(() => {
-        dispatch(setConnectionsLoading(false))
-      })
-  }, [user, dispatch, navigate])
+    if (!user) navigate(ROUTES.LOGIN, { replace: true })
+  }, [user, navigate])
 
-  if (!user) {
-    return null
-  }
+  if (!user) return null
 
   if (loading) {
     return (
-      <div className="min-h-dvh flex flex-col items-center justify-center safe-area-padding px-4 sm:px-6 py-6 sm:py-8">
+      <div className="min-h-dvh flex flex-col items-center justify-center safe-area-padding px-4">
         <span className="loading loading-spinner loading-lg text-primary" />
         <p className="mt-4 text-base-content/70">Loading connections...</p>
       </div>
@@ -66,7 +53,7 @@ export function Connections() {
 
   if (error) {
     return (
-      <div className="min-h-dvh flex flex-col items-center justify-center safe-area-padding px-4 sm:px-6 py-6 sm:py-8">
+      <div className="min-h-dvh flex flex-col items-center justify-center safe-area-padding px-4">
         <div className="alert alert-error max-w-md">
           <span>{error}</span>
         </div>
@@ -74,33 +61,56 @@ export function Connections() {
     )
   }
 
-  if (users.length === 0) {
-    return (
-      <div className="min-h-dvh flex flex-col items-center justify-center safe-area-padding px-4 sm:px-6 py-6 sm:py-8">
-        <p className="text-base-content/70">No connections yet.</p>
-      </div>
-    )
+  if (!isPremium) {
+    return <PremiumUpsell connectionCount={filteredUsers.length} />
   }
 
+  const showListOnMobile = !selectedConnection
+  const showChatOnMobile = !!selectedConnection
+
   return (
-    <div className="min-h-dvh flex flex-col bg-base-200 safe-area-padding">
-      <main className="flex-1 px-4 sm:px-6 py-6 sm:py-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-base-content mb-6">Connections</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {users.map((u) => (
-            <div key={u._id} className="w-full max-w-[280px] mx-auto sm:max-w-none">
-              <ProfileCard
-                size="sm"
-                displayName={userToDisplayName(u)}
-                displayAgeGender={userToDisplayAgeGender(u) || undefined}
-                avatarUrl={u.profilePicture?.trim() || DEFAULT_AVATAR}
-                about={u.about}
-                skills={u.skills}
-              />
-            </div>
-          ))}
-        </div>
-      </main>
+    <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-base-200 safe-area-padding">
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
+        <aside
+          className={`w-full md:w-80 lg:w-96 flex flex-col bg-base-100 border-r border-base-300 shrink-0 min-h-0 overflow-hidden ${showListOnMobile ? 'flex' : 'hidden md:flex'}`}
+        >
+          <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
+            <ConnectionsList
+              users={filteredUsers}
+              selectedConnection={selectedConnection}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              lastMessagePreview={lastMessagePreview}
+              unreadByConnection={unreadByConnection}
+              onlineUserIds={onlineUserIds}
+              onSelectConnection={selectConnection}
+            />
+          </div>
+        </aside>
+
+        <section
+          className={`flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-base-200 ${showChatOnMobile ? 'flex' : 'hidden md:flex'}`}
+        >
+          {!selectedConnection ? (
+            <EmptyChatPlaceholder />
+          ) : (
+            <ChatPanel
+              selectedConnection={selectedConnection}
+              currentUser={user}
+              messages={messages}
+              inputMessage={inputMessage}
+              openingChat={openingChat}
+              onlineUserIds={onlineUserIds}
+              typingUserId={typingUserId}
+              messagesScrollRef={messagesScrollRef}
+              messagesEndRef={messagesEndRef}
+              onBack={() => setSelectedConnection(null)}
+              onInputChange={handleInputChange}
+              onSend={handleSend}
+            />
+          )}
+        </section>
+      </div>
     </div>
   )
 }

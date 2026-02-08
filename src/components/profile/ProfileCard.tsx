@@ -1,3 +1,5 @@
+import { DEFAULT_AVATAR, getProxiedFallback } from '../../lib/imageUtils'
+
 export interface ProfileCardProps {
   displayName: string
   displayAgeGender?: string
@@ -63,9 +65,12 @@ export function ProfileCard({
           className="block w-full h-full object-fill object-center"
           loading="lazy"
           decoding="async"
+          referrerPolicy="no-referrer"
           onError={(e) => {
-            const target = e.target as HTMLImageElement
-            target.src = 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
+            const img = e.target as HTMLImageElement
+            const proxied = getProxiedFallback(img.src)
+            if (proxied && img.src !== proxied) img.src = proxied
+            else img.src = DEFAULT_AVATAR
           }}
         />
       </figure>

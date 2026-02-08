@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { API_BASE_URL } from '../constants'
+import { API_ROOT } from '../constants'
 
 /**
  * Shared axios instance for all API calls.
@@ -7,7 +7,7 @@ import { API_BASE_URL } from '../constants'
  * - On 401 we dispatch a custom event; UnauthorizedHandler in the app shows toast, logs out, redirects.
  */
 export const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_ROOT,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 })

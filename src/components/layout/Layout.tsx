@@ -6,7 +6,8 @@ import { Navbar } from './Navbar'
 
 export function Layout() {
   const location = useLocation()
-  const hideFooter = location.pathname === ROUTES.LOGIN || location.pathname === ROUTES.SIGNUP || location.pathname === ROUTES.HOME
+  const hideFooter = location.pathname === ROUTES.LOGIN || location.pathname === ROUTES.SIGNUP || location.pathname === ROUTES.HOME || location.pathname === ROUTES.CONNECTIONS
+  const isConnectionsPage = location.pathname === ROUTES.CONNECTIONS
   const [navHidden, setNavHidden] = useState(false)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const lastScrollTop = useRef(0)
@@ -44,9 +45,12 @@ export function Layout() {
   }, [])
 
   return (
-    <div className="min-h-dvh flex flex-col">
+    <div className={`h-dvh max-h-dvh flex flex-col  ${isConnectionsPage ? 'overflow-hidden' : ''}`}>
       <Navbar hidden={navHidden} />
-      <main ref={scrollRef} className="flex-1 min-h-0 flex flex-col overflow-auto">
+      <main
+        ref={scrollRef}
+        className={`flex-1  flex flex-col ${isConnectionsPage ? 'overflow-hidden' : ''}`}
+      >
         <Outlet />
       </main>
       {!hideFooter && <Footer />}

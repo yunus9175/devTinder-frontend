@@ -11,10 +11,8 @@ import {
   setRequestsLoading,
 } from '../store/slices/requestsSlice'
 import { updateConnectionCounts } from '../store/slices/authSlice'
+import { DEFAULT_AVATAR } from '../lib/imageUtils'
 import type { ConnectionRequest, User } from '../types/auth'
-
-const DEFAULT_AVATAR =
-  'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
 
 function userToDisplayName(u: User): string {
   return [u.firstName?.trim(), u.lastName?.trim()].filter(Boolean).join(' ') || 'Unknown'
